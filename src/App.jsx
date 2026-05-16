@@ -175,8 +175,19 @@ function App() {
     setLoading(false);
   }
 
-  const handleAssumeTicket = async (ticket) => {
+   const handleAssumeTicket = async (ticket) => {
     setLoading(true);
+    
+    // Se for um chamado mock (falso), apenas atualiza a interface local
+    if (ticket.db_id?.toString().startsWith('mock-')) {
+      setTickets(tickets.map(t => t.db_id === ticket.db_id ? { ...t, status: 'Em Atendimento' } : t));
+      setSelectedTicket({ ...ticket, status: 'Em Atendimento' });
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase
       .from('tickets')
       .update({ status: 'Em Atendimento' })
@@ -195,22 +206,33 @@ function App() {
     setLoading(false);
   }
 
-  const handleCancelTicket = async (ticket) => {
-    if (!window.confirm(`Cancelar o chamado ${ticket.id}?`)) return;
+   const handleCompleteTicket = async (ticket) => {
+    if (!window.confirm(`Concluir o chamado ${ticket.id}?`)) return;
     setLoading(true);
+
+    // Se for um chamado mock (falso), apenas atualiza a interface local
+    if (ticket.db_id?.toString().startsWith('mock-')) {
+      setTickets(tickets.map(t => t.db_id === ticket.db_id ? { ...t, status: 'Concluído' } : t));
+      setIsDetailModalOpen(false);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase
       .from('tickets')
-      .update({ status: 'Cancelado' })
+      .update({ status: 'Concluído' })
       .eq('id', ticket.db_id);
 
     if (!error) {
-      setTickets(tickets.map(t => t.db_id === ticket.db_id ? { ...t, status: 'Cancelado' } : t));
+      setTickets(tickets.map(t => t.db_id === ticket.db_id ? { ...t, status: 'Concluído' } : t));
       setIsDetailModalOpen(false);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } else {
-      console.error('ERRO SUPABASE CANCEL:', error);
-      alert('Erro ao cancelar chamado: ' + error.message);
+      console.error('ERRO SUPABASE CONCLUIR:', error);
+      alert('Erro ao concluir chamado: ' + error.message);
       setAuthError(error.message);
     }
     setLoading(false);
@@ -664,7 +686,7 @@ function App() {
                     <label className="text-[10px] font-black text-[#a1a1aa] uppercase tracking-widest block mb-1">Status</label>
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${
-                        selectedTicket.status === 'Cancelado' ? 'bg-red-500' :
+                        selectedTicket.status === 'Concluído' ? 'bg-green-500' :
                         selectedTicket.status === 'Em Progresso' ? 'bg-blue-500 animate-pulse' :
                         'bg-amber-400'
                       }`}></div>
@@ -714,18 +736,18 @@ function App() {
                   <button className="bg-white/5 w-full py-4 rounded-2xl text-white font-black uppercase text-[10px] flex items-center justify-center gap-3 hover:bg-white/10 transition-all">
                     <span className="material-symbols-outlined text-sm">history</span> HISTÓRICO
                   </button>
-                  {selectedTicket.status !== 'Cancelado' ? (
+                  {selectedTicket.status !== 'Concluído' ? (
                     <button
-                      onClick={() => handleCancelTicket(selectedTicket)}
+                      onClick={() => handleCompleteTicket(selectedTicket)}
                       disabled={loading}
-                      className="bg-red-500/10 w-full py-4 rounded-2xl text-red-500 font-black uppercase text-[10px] flex items-center justify-center gap-3 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                      className="bg-green-500/10 w-full py-4 rounded-2xl text-green-500 font-black uppercase text-[10px] flex items-center justify-center gap-3 hover:bg-green-500/20 transition-all disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-sm">cancel</span> {loading ? 'AGUARDE...' : 'CANCELAR'}
+                      <span className="material-symbols-outlined text-sm">check_circle</span> {loading ? 'AGUARDE...' : 'CONCLUIR'}
                     </button>
                   ) : (
-                    <div className="bg-red-500/10 w-full py-4 rounded-2xl flex items-center justify-center gap-3">
-                      <span className="material-symbols-outlined text-red-500 text-sm">block</span>
-                      <span className="text-red-500 font-black uppercase text-[10px]">Cancelado</span>
+                    <div className="bg-green-500/10 w-full py-4 rounded-2xl flex items-center justify-center gap-3">
+                      <span className="material-symbols-outlined text-green-500 text-sm">verified</span>
+                      <span className="text-green-500 font-black uppercase text-[10px]">Concluído</span>
                     </div>
                   )}
                 </div>
