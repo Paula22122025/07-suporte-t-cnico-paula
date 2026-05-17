@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from './lib/supabase'
+import { supabase, isSupabaseConfigured } from './lib/supabase'
 
 // Mapeamento de categorias para os UUIDs do banco
 const categoryIdMap = {
@@ -86,6 +86,10 @@ function App() {
   const [newTicket, setNewTicket] = useState({ title: '', type: 'Informática/TI', priority: 'Média', user: 'Geral' })
 
   const fetchTickets = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('tickets')
@@ -134,6 +138,29 @@ function App() {
     const ticketNumber = Math.floor(Math.random() * 9000) + 1000;
     const uiId = `#TK-${ticketNumber}`;
 
+    if (!isSupabaseConfigured) {
+      const entry = {
+        id: uiId,
+        db_id: `mock-${ticketNumber}`,
+        title: newTicket.title,
+        description: `Solicitado por: ${newTicket.user || 'Paula Admin'} (Modo Offline)`,
+        type: newTicket.type,
+        priority: newTicket.priority,
+        status: 'Pendente',
+        user: newTicket.user || 'Paula Admin',
+        date: new Date().toLocaleString('pt-BR')
+      };
+      setTickets([entry, ...tickets]);
+      setCreatedTicket(entry);
+      setIsModalOpen(false);
+      setIsSuccessModalOpen(true);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      setNewTicket({ title: '', type: 'Informática/TI', priority: 'Média', user: 'Geral' });
+      setLoading(false);
+      return;
+    }
+
     const ticketData = {
       ticket_no: ticketNumber,
       subject: newTicket.title,
@@ -178,8 +205,8 @@ function App() {
    const handleAssumeTicket = async (ticket) => {
     setLoading(true);
     
-    // Se for um chamado mock (falso), apenas atualiza a interface local
-    if (ticket.db_id?.toString().startsWith('mock-')) {
+    // Se for um chamado mock (falso) ou Supabase offline, apenas atualiza a interface local
+    if (ticket.db_id?.toString().startsWith('mock-') || !isSupabaseConfigured) {
       setTickets(tickets.map(t => t.db_id === ticket.db_id ? { ...t, status: 'Em Atendimento' } : t));
       setSelectedTicket({ ...ticket, status: 'Em Atendimento' });
       setShowToast(true);
@@ -210,8 +237,8 @@ function App() {
     if (!window.confirm(`Concluir o chamado ${ticket.id}?`)) return;
     setLoading(true);
 
-    // Se for um chamado mock (falso), apenas atualiza a interface local
-    if (ticket.db_id?.toString().startsWith('mock-')) {
+    // Se for um chamado mock (falso) ou Supabase offline, apenas atualiza a interface local
+    if (ticket.db_id?.toString().startsWith('mock-') || !isSupabaseConfigured) {
       setTickets(tickets.map(t => t.db_id === ticket.db_id ? { ...t, status: 'Concluído' } : t));
       setIsDetailModalOpen(false);
       setShowToast(true);
@@ -366,6 +393,27 @@ function App() {
               </header>
 
               <main className="p-10 max-w-7xl mx-auto">
+                {!isSupabaseConfigured && (
+                  <div className="mb-8 p-6 glass rounded-[24px] border-amber-500/20 bg-amber-500/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                        <span className="material-symbols-outlined">warning</span>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-white uppercase tracking-wider">Modo Demo / Offline Ativado</h4>
+                        <p className="text-xs text-[#a1a1aa] mt-1 leading-relaxed">
+                          O banco de dados Supabase não foi configurado no Netlify. Adicione as variáveis <strong>VITE_SUPABASE_URL</strong> e <strong>VITE_SUPABASE_ANON_KEY</strong> para ativar o modo online.
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setActiveTab('Configurações')}
+                      className="px-6 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-black transition-all shrink-0"
+                    >
+                      Como Configurar
+                    </button>
+                  </div>
+                )}
                 <AnimatePresence mode="wait">
                   {activeTab === 'Painel Geral' && (
                     <motion.div key="dash" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -511,6 +559,40 @@ function App() {
                         <h2 className="text-3xl font-black text-white uppercase">Ajustes do <span className="text-gradient">Sistema</span></h2>
                       </div>
                       <div className="max-w-2xl space-y-8">
+                        <section className="glass p-8 rounded-[32px] border-white/5">
+                          <h4 className="text-sm font-black text-white uppercase mb-6 tracking-widest">Conexão do Banco de Dados</h4>
+                          {isSupabaseConfigured ? (
+                            <div className="p-4 bg-green-500/5 border border-green-500/20 rounded-2xl flex items-center gap-3">
+                              <span className="material-symbols-outlined text-green-500">cloud_done</span>
+                              <div>
+                                <p className="text-xs font-black text-green-500 uppercase">Supabase Conectado</p>
+                                <p className="text-[10px] text-[#a1a1aa] mt-0.5">Sua aplicação está conectada ao banco de dados em tempo real no Supabase.</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-6">
+                              <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl flex items-center gap-3">
+                                <span className="material-symbols-outlined text-amber-500">cloud_off</span>
+                                <div>
+                                  <p className="text-xs font-black text-amber-500 uppercase font-sans">Supabase Desconectado (Modo Demo)</p>
+                                  <p className="text-[10px] text-[#a1a1aa] mt-0.5">O sistema está rodando localmente em memória com dados simulados.</p>
+                                </div>
+                              </div>
+                              <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
+                                <h5 className="text-[11px] font-black text-white uppercase mb-3">Como ativar o banco no Netlify:</h5>
+                                <ol className="list-decimal pl-5 space-y-2 text-[10px] text-[#a1a1aa] leading-relaxed">
+                                  <li>Acesse o painel do seu site no <strong>Netlify</strong>.</li>
+                                  <li>Vá em <strong>Site configuration</strong> &gt; <strong>Environment variables</strong>.</li>
+                                  <li>Clique em <strong>Add a variable</strong> &gt; <strong>Add single variable</strong>.</li>
+                                  <li>Adicione a variável <code>VITE_SUPABASE_URL</code> com o valor de URL do seu banco de dados.</li>
+                                  <li>Adicione a variável <code>VITE_SUPABASE_ANON_KEY</code> com a chave anônima (anon key).</li>
+                                  <li>Faça um novo deploy (ou clique em <strong>Trigger deploy</strong> &gt; <strong>Clear cache and deploy site</strong>) para aplicar!</li>
+                                </ol>
+                              </div>
+                            </div>
+                          )}
+                        </section>
+
                         <section className="glass p-8 rounded-[32px] border-white/5">
                           <h4 className="text-sm font-black text-white uppercase mb-6 tracking-widest">Perfil Profissional</h4>
                           <div className="flex items-center gap-6 mb-8">
