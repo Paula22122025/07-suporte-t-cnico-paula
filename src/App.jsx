@@ -30,6 +30,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showDemoBanner, setShowDemoBanner] = useState(true)
   
   const avatarOptions = [
     'Paula', 'Felix', 'Aneka', 'Max', 'Luna', 'Leo', 'Mia', 'Zoe'
@@ -393,8 +394,8 @@ function App() {
               </header>
 
               <main className="p-10 max-w-7xl mx-auto">
-                {!isSupabaseConfigured && (
-                  <div className="mb-8 p-6 glass rounded-[24px] border-amber-500/20 bg-amber-500/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                {!isSupabaseConfigured && showDemoBanner && (
+                  <div className="mb-8 p-6 glass rounded-[24px] border-amber-500/20 bg-amber-500/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative group">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
                         <span className="material-symbols-outlined">warning</span>
@@ -406,12 +407,21 @@ function App() {
                         </p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => setActiveTab('Configurações')}
-                      className="px-6 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-black transition-all shrink-0"
-                    >
-                      Como Configurar
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button 
+                        onClick={() => setActiveTab('Configurações')}
+                        className="px-6 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-black transition-all"
+                      >
+                        Como Configurar
+                      </button>
+                      <button 
+                        onClick={() => setShowDemoBanner(false)}
+                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#a1a1aa] hover:text-white hover:bg-white/10 transition-all"
+                        title="Ocultar esta mensagem"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                      </button>
+                    </div>
                   </div>
                 )}
                 <AnimatePresence mode="wait">
