@@ -394,7 +394,7 @@ function App() {
               </header>
 
               <main className="p-10 max-w-7xl mx-auto">
-                {!isSupabaseConfigured && showDemoBanner && (
+                {import.meta.env.DEV && !isSupabaseConfigured && showDemoBanner && (
                   <div className="mb-8 p-6 glass rounded-[24px] border-amber-500/20 bg-amber-500/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative group">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
@@ -588,17 +588,19 @@ function App() {
                                   <p className="text-[10px] text-[#a1a1aa] mt-0.5">O sistema está rodando localmente em memória com dados simulados.</p>
                                 </div>
                               </div>
-                              <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
-                                <h5 className="text-[11px] font-black text-white uppercase mb-3">Como ativar o banco no Netlify:</h5>
-                                <ol className="list-decimal pl-5 space-y-2 text-[10px] text-[#a1a1aa] leading-relaxed">
-                                  <li>Acesse o painel do seu site no <strong>Netlify</strong>.</li>
-                                  <li>Vá em <strong>Site configuration</strong> &gt; <strong>Environment variables</strong>.</li>
-                                  <li>Clique em <strong>Add a variable</strong> &gt; <strong>Add single variable</strong>.</li>
-                                  <li>Adicione a variável <code>VITE_SUPABASE_URL</code> com o valor de URL do seu banco de dados.</li>
-                                  <li>Adicione a variável <code>VITE_SUPABASE_ANON_KEY</code> com a chave anônima (anon key).</li>
-                                  <li>Faça um novo deploy (ou clique em <strong>Trigger deploy</strong> &gt; <strong>Clear cache and deploy site</strong>) para aplicar!</li>
-                                </ol>
-                              </div>
+                              {import.meta.env.DEV && (
+                                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
+                                  <h5 className="text-[11px] font-black text-white uppercase mb-3">Como ativar o banco no Netlify:</h5>
+                                  <ol className="list-decimal pl-5 space-y-2 text-[10px] text-[#a1a1aa] leading-relaxed">
+                                    <li>Acesse o painel do seu site no <strong>Netlify</strong>.</li>
+                                    <li>Vá em <strong>Site configuration</strong> &gt; <strong>Environment variables</strong>.</li>
+                                    <li>Clique em <strong>Add a variable</strong> &gt; <strong>Add single variable</strong>.</li>
+                                    <li>Adicione a variável <code>VITE_SUPABASE_URL</code> com o valor de URL do seu banco de dados.</li>
+                                    <li>Adicione a variável <code>VITE_SUPABASE_ANON_KEY</code> com a chave anônima (anon key).</li>
+                                    <li>Faça um novo deploy (ou clique em <strong>Trigger deploy</strong> &gt; <strong>Clear cache and deploy site</strong>) para aplicar!</li>
+                                  </ol>
+                                </div>
+                              )}
                             </div>
                           )}
                         </section>
